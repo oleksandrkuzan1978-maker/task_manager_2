@@ -24,7 +24,7 @@ class Project(models.Model):
     title = models.CharField(max_length=200, unique=True, verbose_name=_("Название проекта"))
     description = models.TextField(verbose_name=_("Описание проекта"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Дата создания"))
-    files = models.ManyToManyField(ProjectFile, related_name='projects', blank=True, null=True, verbose_name=_("Файлы"))
+    files = models.ManyToManyField(ProjectFile, related_name='projects', blank=True, verbose_name=_("Файлы"))
 
     class Meta:
         db_table = 'project'
