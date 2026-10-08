@@ -12,12 +12,15 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 import environ
 from pathlib import Path
 
-env = environ.Env(DEBUG=(bool, False),)
+from django.template.backends import django
 
-env.read_env(env_file=".env")
+env = environ.Env(DEBUG=(bool, False),)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+environ.Env.read_env(env_file=BASE_DIR/".env")
+
+
 
 
 # Quick-start development settings - unsuitable for production
