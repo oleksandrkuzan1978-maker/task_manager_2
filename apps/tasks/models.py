@@ -55,22 +55,21 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
+class Status(models.TextChoices):
+    NEW = 'New', _('Новая')
+    IN_PROGRESS = 'In progress', _('В процессе')
+    PENDING = 'Pending', _('Ожидание')
+    BLOCKED = 'Blocked', _('Заблокирована')
+    DONE = 'Done', _('Выполнено')
+
+class Priority(models.TextChoices):
+    LOW = 'Низкий', _('Низкий')
+    MEDIUM = 'Средний', _('Средний')
+    HIGH = 'Высокий', _('Высокий')
+    CRITICAL = 'Очень высокий', _('Очень высокий')
+
 
 class Task(models.Model):
-    STATUS_CHOICES = [
-        ('New', _('Новая')),
-        ('In progress', _('В процессе')),
-        ('Pending', _('Ожидание')),
-        ('Blocked', _('Заблокирована')),
-        ('Done', _('Выполнено')),
-    ]
-
-    PRIORITY_CHOICES = [
-        ('Низкий', _('Низкий')),
-        ('Средний', _('Средний')),
-        ('Высокий', _('Высокий')),
-        ('Очень высокий', _('Очень высокий')),
-    ]
 
     title = models.CharField(
         max_length=200,
@@ -79,8 +78,8 @@ class Task(models.Model):
         verbose_name=_("Название задачи")
     )
     description = models.TextField(blank=True, null=True, verbose_name=_("Описание"))
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='New', verbose_name=_("Статус"))
-    priority = models.CharField(max_length=15, choices=PRIORITY_CHOICES, default='Средний', verbose_name=_("Приоритет"))
+    status = models.CharField(max_length=15, choices=Status, default='New', verbose_name=_("Статус"))
+    priority = models.CharField(max_length=15, choices=Priority, default='Средний', verbose_name=_("Приоритет"))
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', verbose_name=_("Проект"))
     tags = models.ManyToManyField(Tag, related_name='tasks', blank=True, verbose_name=_("Теги"))
     assignee = models.ForeignKey(settings.AUTH_USER_MODEL
