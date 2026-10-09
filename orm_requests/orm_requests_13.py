@@ -1,6 +1,3 @@
-from datetime import date, timedelta
-
-from django.utils import timezone
 # Поддерживаем и запуск через python -m, и прямой запуск Current File.
 if __package__:
     from .bootstrap import setup_django
@@ -12,7 +9,7 @@ setup_django()
 # ИМПОРТЫ МОДЕЛЕЙ — СТРОГО ПОСЛЕ django.set
 from apps.tasks.models import Task
 
-print('\nЗАДАНИЕ 13\n')
+
 
 # 1. Напишите запрос, который поможет получить только те задачи, у которых:
 #   ○ Статус “newˮ
