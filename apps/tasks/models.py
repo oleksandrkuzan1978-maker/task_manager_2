@@ -99,7 +99,10 @@ class Task(models.Model):
         verbose_name_plural = _("Задачи")
         ordering = ['due_date', 'assignee']  # Сортировка по дедлайну (от дальней к ближней) и исполнителю
         unique_together = ('title', 'project')
-        constraints = [models.UniqueConstraint(fields=['title',], name='unique_task')]
+        constraints = [models.UniqueConstraint(fields=['title',], name='unique_task'),
+                       models.CheckConstraint(
+                           condition=models.Q(priority__in=('Низкий', 'Средний', 'Высокий', 'Очень высокий')),
+                       name='prior')]
 
     def __str__(self):
         return self.title
