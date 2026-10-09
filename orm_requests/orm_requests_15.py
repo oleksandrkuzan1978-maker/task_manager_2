@@ -14,7 +14,7 @@ setup_django()
 from apps.tasks.models import Task
 from django.db.models import Q
 
-print('\nЗА ПРАКТИКУ: ЗАДАНИЕ 15\n')
+print('\nПРАКТИКА: ЗАДАНИЕ 15\n')
 
 # 1. Запрос с комбинацией условий с помощью Q-классов:
 # (Статус 'New' И Приоритет 'Очень высокий') ИЛИ (Тег НЕ равен 'Q&A')

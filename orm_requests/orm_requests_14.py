@@ -13,7 +13,7 @@ setup_django()
 # ИМПОРТЫ МОДЕЛЕЙ — СТРОГО ПОСЛЕ django.set
 from apps.tasks.models import Task
 
-print('\nЗА ПРАКТИКУ: ЗАДАНИЕ 14\n')
+print('\nПРАКТИКА: ЗАДАНИЕ 14\n')
 
 # 1. Находим запрос для конкретной задачи (берём задачу "Update schema")
 task_query = Task.objects.filter(title="Update schema")
