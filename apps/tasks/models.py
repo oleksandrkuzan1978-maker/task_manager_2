@@ -2,7 +2,7 @@ from django.db import models
 from django.core.validators import MinLengthValidator
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
-
+from django.db.models import Q
 
 
 class ProjectFile(models.Model):
@@ -98,7 +98,11 @@ class Task(models.Model):
         verbose_name_plural = _("Задачи")
         ordering = ['due_date', 'assignee']  # Сортировка по дедлайну (от дальней к ближней) и исполнителю
         unique_together = ('title', 'project')
-        constraints = [models.UniqueConstraint(fields=['title',], name='unique_task')]
+        constraints = [models.UniqueConstraint(fields=['title',], name='unique_task'),
+                       models.CheckConstraint(condition=models.Q(status__in=Status.values)
+                                              , name='task_status_valid'),
+                       models.CheckConstraint(condition=models.Q(priority__in=Priority.values),
+                                              name='task_priority_valid')]
 
     def __str__(self):
         return self.title

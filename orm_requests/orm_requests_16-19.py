@@ -2,6 +2,8 @@ from datetime import date, timedelta
 
 from django.utils import timezone
 
+from orm_requests.orm_requests_6 import tag_name
+
 # Поддерживаем и запуск через python -m, и прямой запуск Current File.
 if __package__:
     from .bootstrap import setup_django
@@ -38,7 +40,7 @@ tasks_without_assignee = Task.objects.filter(
 )
 
 if tasks_without_assignee.exists():
-    print(f"Найдено задач без исполнителя: {tasks_without_assignee.count()}\n")
+    print(f"Найдено {tasks_without_assignee.count()} задач без исполнителя\n")
     for task in tasks_without_assignee:
         print("=" * 50)
         print(f"задача: {task.title}")
@@ -49,10 +51,12 @@ else:
 
 print('\nПРАКТИКА: ЗАДАНИЕ 19\n')
 
-tasks_with_qa_tags = Task.objects.filter(tags__name__icontains="Q&A").distinct()
+tag_name = "Q&A"
 
-if tasks_with_qa_tags.exists():
-    for task in tasks_with_qa_tags:
+tasks_with_tag = Task.objects.filter(tags__name__icontains=tag_name).distinct()
+
+if tasks_with_tag.exists():
+    for task in tasks_with_tag:
         print("=" * 50)
         print(f"Имя задачи: {task.title}")
         print(f"Статус задачи: {task.status}")
@@ -60,4 +64,4 @@ if tasks_with_qa_tags.exists():
         print(f"Имя проекта: {task.project.title}")
         print("=" * 50)
 else:
-    print("Задачи с тегом 'Q&A' не найдены.")
+    print(f"Задачи с тегом '{tag_name}' не найдены.")

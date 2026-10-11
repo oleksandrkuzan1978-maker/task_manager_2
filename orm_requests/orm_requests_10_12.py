@@ -24,7 +24,7 @@ created_at = date(2026, 10, 8)
 projects = Project.objects.filter(created_at__date__lte=created_at)
 
 # 4. Выведите имена таких проектов.
-if projects:
+if projects.exists():
     print(f"Проекты, созданные не позднее даты: {created_at}")
     for project in projects:
         print("\t", project.title)
@@ -44,7 +44,7 @@ row_in_title = 'TI'
 specifying_projects = Project.objects.filter(Q(created_at__date__gte=created_at) & Q(title__icontains=row_in_title))
 
 # 3. Выведите имена таких проектов.
-if specifying_projects:
+if specifying_projects.exists():
     print(f"Проекты, созданные позднее даты: {created_at - timedelta(days=1)}"
           f" и имеющие в своем названии '{row_in_title}':")
     for project in specifying_projects:
@@ -61,7 +61,7 @@ title = 'TIGER'
 required_files = ProjectFile.objects.filter(projects__title__icontains=title)
 
 # 2. Выведите только пути к каждому файлу.
-if required_files:
+if required_files.exists():
     print(f"Пути к файлам проекта '{title}':")
     for file in required_files:
         print(f"\t", file.file)
