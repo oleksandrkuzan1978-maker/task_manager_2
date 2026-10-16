@@ -46,7 +46,7 @@ print('\nЗАДАНИЕ 9\n')
 # 2. Выведите имена всех этих тегов.
 ROW_MATCH = "De"
 tags_by_row = Tag.objects.filter(name__icontains=ROW_MATCH)
-if tags_by_row:
+if tags_by_row.exists():
     print(f"\tТеги со строкой '{ROW_MATCH}' в их именах:")
     for tag in tags_by_row:
         print("\t"*5, tag.name)

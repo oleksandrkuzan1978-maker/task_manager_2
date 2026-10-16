@@ -1,7 +1,9 @@
 # Требует доработки!
 from datetime import date, timedelta
 
+from django.db import IntegrityError
 from django.utils import timezone
+
 # Поддерживаем и запуск через python -m, и прямой запуск Current File.
 if __package__:
     from .bootstrap import setup_django
@@ -15,16 +17,21 @@ from apps.tasks.models import Task
 
 print('\nПРАКТИКА: ЗАДАНИЕ 14\n')
 
+title = "Update schema"
+status = "Pending"
 # 1. Находим запрос для конкретной задачи (берём задачу "Update schema")
-task_query = Task.objects.filter(title="Update schema")
+task_query = Task.objects.filter(title=title)
 
 # 2. Обновляем статс при помощи метода update()
 if task_query.exists():
-    updated_count = task_query.update(status="Pending")
-    print(f"Успешно обновлено задач: {updated_count}")
+    try:
+        updated_count = task_query.update(status=status)
+        print(f"Успешно обновлено задач: {updated_count}")
+    except IntegrityError as e:
+        print(f"{e}: Статус {status} отсутствует в БД")
 
     # Проверяем результат
-    updated_task = task_query.first()
+    updated_task = Task.objects.get(title=title)
     print(f"Новый статус задачи '{updated_task.title}: {updated_task.status}'")
 else:
-    print("задача с названием 'Update schema' не найдена для обновления.")
+    print(f"задача '{title}' не найдена для обновления.")
