@@ -93,16 +93,16 @@ from apps.tasks.models import *
 # for username, count_of_tasks in count_of_tasks_to_user:
 #     print(f"Developer - {username} | Count of tasks: {count_of_tasks}")
 
-#print("_"*50)
-# print('\nЗАДАНИЕ ADD_7\n')
-#
-# all_tasks = (Task.objects.order_by('priority', 'due_date')
-#              .values_list('title', 'priority', 'due_date'))
-#
-# for title, priority, due_date in all_tasks:
-#     print(f"Задача: '{title}', "
-#           f"Приоритет: '{priority}', "
-#           f"Срок выполнения: {due_date.date()}")
+print("_"*50)
+print('\nЗАДАНИЕ ADD_7\n')
+
+all_tasks = (Task.objects.order_by('priority', 'due_date')
+             .values_list('title', 'priority', 'due_date'))
+
+for title, priority, due_date in all_tasks:
+    print(f"Задача: '{title}', "
+          f"Приоритет: '{priority}', "
+          f"Срок выполнения: {due_date.date()}")
 
 
 print("_"*50)
