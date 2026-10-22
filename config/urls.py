@@ -16,11 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from apps.tasks.views import get_all_projects, get_all_tasks, get_tag_by_id
+from apps.tasks.views import get_all_projects, get_all_tasks, get_put_del_tag, post_get_all_tags, get_task
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('projects/', get_all_projects, name='get_all_projects'),
     path('tasks/', get_all_tasks, name='get_all_tasks'),
-    path('tags/<int:tag_id>/', get_tag_by_id, name='get_tag_by_id'),
+    path('tasks/<int:task_id>/', get_task, name='get_task'),
+    path('tags/', post_get_all_tags, name='post_get_all_tags'),
+    path('tags/<int:tag_id>/', get_put_del_tag, name='get_put_del_tag'),
 
 ]
