@@ -1,2 +1,2 @@
 
-from .projects import AllProjectsSerializer
+from .projects import AllProjectsSerializer, ProjectDetailSerializer
