@@ -1,22 +1,10 @@
 from django.shortcuts import get_object_or_404
-
-from apps.serializers import AllProjectsSerializer, TagsSerializer, AllTasksSerializer, TaskInfoSerializer
-from rest_framework.request import Request
+from apps.tasks.serializers import TagsSerializer, AllTasksSerializer, TaskInfoSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view
 
-from apps.tasks.models import Project, Task, Tag
-
-# Create your views here.
-@api_view(['GET'])
-def get_all_projects(request):
-    all_projects = Project.objects.all()
-    if all_projects.exists():
-        serializer = AllProjectsSerializer(all_projects, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    else:
-        return Response({'Products': 'Projects not found'}, status=status.HTTP_204_NO_CONTENT)
+from apps.tasks.models import Task, Tag
 
 
 @api_view(['GET'])
@@ -71,5 +59,3 @@ def  get_put_del_tag(request, tag_id):
     if request.method == 'DELETE':
         tag.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-

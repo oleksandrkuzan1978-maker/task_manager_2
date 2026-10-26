@@ -1,15 +1,7 @@
-from django.contrib import admin, messages
-from .models import Project, Task, Tag, ProjectFile
+from django.contrib import admin
+from .models import Task, Tag
 
 # --- Кастомные Админ-действия ---
-
-@admin.action(description="Заменить пробелы на нижние подчеркивания в названии")
-def replace_spaces_with_underscores(modeladmin, request, queryset):
-    for obj in queryset:
-        obj.title = obj.title.replace(' ', '_')
-        obj.save()
-    modeladmin.message_user(request, "Пробелы успешно заменены на '_' в выбранных объектах.")
-
 
 @admin.action(description="Установить статус 'Выполнено'")
 def set_status_done(modeladmin, request, queryset):
@@ -35,25 +27,6 @@ def set_priority_very_high(modeladmin, request, queryset):
 
 
 # --- Регистрация классов ---
-
-@admin.register(ProjectFile)
-class ProjectFileAdmin(admin.ModelAdmin):
-    list_display = ('title', 'file', 'created_at')
-    search_fields = ('title',)
-    list_filter = ('created_at',)
-
-
-@admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('title', 'created_at', 'count_of_files_display')
-    search_fields = ('title',)
-    actions = [replace_spaces_with_underscores]
-
-    def count_of_files_display(self, obj):
-        return obj.count_of_files
-    count_of_files_display.short_description = "count of Files"  # Название колонки в админке
-
-
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ('name',)
