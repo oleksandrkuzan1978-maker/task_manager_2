@@ -16,12 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from apps.projects.views.projects_fb import get_all_projects, index
 from apps.tasks.views.tasks_fb import  get_all_tasks, get_put_del_tag, post_get_all_tags, get_task
+from apps.projects.views.projects_fb import get_all_create_projects, index, get_patch_delete_project
 urlpatterns = [
     path('', index, name='index'),
     path('admin/', admin.site.urls),
-    path('projects/', get_all_projects, name='get_all_projects'),
+    path('projects/', get_all_create_projects, name='get_all_create_projects'),
+    path('projects/<int:pk>/', get_patch_delete_project, name='get_patch_delete_project'),
     path('tasks/', get_all_tasks, name='get_all_tasks'),
     path('tasks/<int:task_id>/', get_task, name='get_task'),
     path('tags/', post_get_all_tags, name='post_get_all_tags'),
