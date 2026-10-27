@@ -1,3 +1,5 @@
+"""Учебные запросы проектов по дате и названию и файлов по подстроке названия проекта."""
+
 from datetime import date, timedelta
 
 from django.utils import timezone

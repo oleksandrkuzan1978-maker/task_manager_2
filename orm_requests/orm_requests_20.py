@@ -1,3 +1,5 @@
+"""Учебный поиск файлов с датой создания не ранее чем через семь дней от сегодня и связанных проектов."""
+
 from datetime import timedelta
 from django.utils import timezone
 

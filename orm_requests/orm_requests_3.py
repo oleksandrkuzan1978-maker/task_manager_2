@@ -1,3 +1,5 @@
+"""Учебный скрипт создания записей файлов и привязки к проектам TIGER и SapHYR INC; содержимое файлов не записывает."""
+
 # Поддерживаем и запуск через python -m, и прямой запуск Current File.
 if __package__:
     from .bootstrap import setup_django

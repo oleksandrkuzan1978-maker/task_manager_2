@@ -1,3 +1,5 @@
+"""Учебный поиск проектов по нижней границе даты создания и минимальному количеству файлов."""
+
 from datetime import timedelta
 from django.utils import timezone
 from django.db.models import Count

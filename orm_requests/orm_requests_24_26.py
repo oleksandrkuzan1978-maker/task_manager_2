@@ -1,3 +1,8 @@
+"""Учебные запросы задач по сроку, приоритету и статусу и обновление приоритета задач TIGER.
+
+Последнее обновление выбирает задачи, созданные раньше текущего момента, без вычитания месяца.
+"""
+
 from django.utils import timezone
 import calendar
 from datetime import datetime, timedelta
@@ -16,6 +21,10 @@ print('\nЗАДАНИЕ 24\n')
 
 # Напишите функцию, которая будет высчитывать конец месяца от текущей даты.
 def calculate_end_of_month() -> datetime:
+    """Вернуть полночь последнего дня текущего по timezone.now() месяца в системном часовом поясе.
+
+    Это начало последнего дня, а не последний момент месяца.
+    """
     current_date = timezone.now()
     amount_of_days = calendar.monthrange(current_date.year, current_date.month)[1]
     date = datetime(year=current_date.year, month=current_date.month, day=amount_of_days)

@@ -1,3 +1,5 @@
+"""Команда заполнения базы случайными проектами, файлами, задачами и тегами с необязательной очисткой."""
+
 import random
 
 from datetime import timedelta
@@ -26,12 +28,14 @@ faker = Faker('ru_RU')
 
 class Command(BaseCommand):
 
+    """Команда seed_task для заполнения базы демонстрационными данными с параметром --clear."""
     help = 'Заполняет базу тестовыми данными'
 
 
 
     def add_arguments(self, parser):
 
+        """Добавить флаг --clear для удаления существующих данных перед заполнением."""
         parser.add_argument('--clear', action='store_true'
 
                             , help='Удалить старые данные перед заполнением')
@@ -41,7 +45,13 @@ class Command(BaseCommand):
     @transaction.atomic # если что-то упадёт, в базу не запишется ничего
 
     def handle(self, *args, **options):
-        """Создать проекты с файлами и случайными задачами и тегами."""
+        """Создать пять проектов со случайными файлами и задачами и использовать заданный набор тегов.
+
+        При --clear сначала удаляет прежние данные. Пользователей не создаёт.
+        Изменения БД выполняются в транзакции; при ошибке пытается удалить новые файлы.
+        Код ожидает Task.STATUS_CHOICES, Task.PRIORITY_CHOICES и импорт ProjectFile из apps.tasks.models;
+        текущие модели не предоставляют эти имена, поэтому команда требует исправления перед запуском.
+        """
         from uuid import uuid4
 
         from django.contrib.auth import get_user_model
@@ -135,7 +145,11 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def clear(self):
-        """Удалить все проекты, задачи, теги и вложения, сохранив пользователей."""
+        """Удалить все проекты, записи файлов и теги, каскадно удаляя задачи и связи.
+
+        Пользователей сохраняет. Физические файлы удаляет после успешной фиксации транзакции,
+        если соответствующие пути больше не используются записями ProjectFile.
+        """
         storage = ProjectFile._meta.get_field('file').storage
         file_names = set(
             ProjectFile.objects.exclude(file='').values_list('file', flat=True)
@@ -147,6 +161,7 @@ class Command(BaseCommand):
 
         def delete_files():
             # При откате БД старые вложения должны оставаться доступными.
+            """После фиксации транзакции удалить неиспользуемые файлы и вывести ошибки удаления в stderr."""
             for name in file_names:
                 try:
                     # Не удаляем файл, если к моменту commit его снова используют.

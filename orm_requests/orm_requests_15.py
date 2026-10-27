@@ -1,3 +1,5 @@
+"""Учебный запрос новых задач очень высокого приоритета либо задач без тега Q&A."""
+
 from datetime import date, timedelta
 
 from django.utils import timezone

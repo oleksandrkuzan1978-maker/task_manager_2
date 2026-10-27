@@ -1,3 +1,5 @@
+"""Учебный скрипт вывода новых задач высокого приоритета, даты создания и почты исполнителя."""
+
 from datetime import date, timedelta
 
 from django.utils import timezone
