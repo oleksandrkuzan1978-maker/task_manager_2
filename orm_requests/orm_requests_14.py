@@ -1,3 +1,5 @@
+"""Учебный скрипт обновления статуса задачи Update schema на Pending и вывода результата."""
+
 # Требует доработки!
 from datetime import date, timedelta
 

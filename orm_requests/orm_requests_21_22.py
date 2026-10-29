@@ -1,3 +1,5 @@
+"""Учебный скрипт перевода новых задач в работу и увеличения сроков задач в работе на три дня."""
+
 from datetime import timedelta, datetime
 from django.utils import timezone
 from django.db.models import F

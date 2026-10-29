@@ -1,3 +1,5 @@
+"""Дополнительные ORM-примеры: сортировка задач по приоритету и сроку и подсчёт задач пользователей."""
+
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Q, F, Count, Avg, Min, Max

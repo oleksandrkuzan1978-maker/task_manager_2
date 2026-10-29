@@ -1,10 +1,9 @@
-from django.core.signals import request_started
+"""Главная страница и функциональные API-представления списка, создания, изменения и удаления проектов."""
+
+
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import datetime
-
-from django.utils.formats import date_format
-from rest_framework.utils.representation import serializer_repr
 
 from apps.projects.serializers import AllProjectsSerializer, ProjectDetailSerializer
 from rest_framework.response import Response
@@ -15,11 +14,16 @@ from django.http import HttpResponse
 
 """Текстовая главная страница проекта."""
 def index(request):
-    """Вернуть текст главной страницы проекта."""
+    """Вернуть HTTP-ответ с текстом «Главная страница»."""
     return HttpResponse("Главная страница")
 
 ##Закончили на Задании 7 (Adpractice_Pr5, стр. 43-44)
 def get_objects(date_from=None, date_to=None):
+    """Вернуть проекты с фильтром created_at между двумя датами YYYY-MM-DD включительно.
+
+    Фильтр применяется только при наличии обеих дат; границы соответствуют полуночи.
+    Некорректная строка даты вызывает ValueError; одна указанная дата не ограничивает выборку.
+    """
     if date_from and date_to:
         date_from = timezone.make_aware(datetime.strptime(date_from, '%Y-%m-%d'))
         date_to = timezone.make_aware(datetime.strptime(date_to, '%Y-%m-%d'))
@@ -31,6 +35,11 @@ def get_objects(date_from=None, date_to=None):
 
 @api_view(['GET', 'POST'])
 def get_all_create_projects(request: Response) -> Response:
+    """Обработать GET списка проектов или POST создания проекта.
+
+    GET принимает date_from и date_to в формате YYYY-MM-DD и возвращает 200 либо 204 при пустой выборке.
+    POST проверяет данные сериализатором и возвращает 201 при создании либо 400 при ошибках.
+    """
     if request.method == 'GET':
         date_from = request.query_params.get('date_from')
         date_to = request.query_params.get('date_to')
@@ -50,10 +59,16 @@ def get_all_create_projects(request: Response) -> Response:
 
 
 def get_project(pk:int):
+    """Найти проект по первичному ключу или вызвать Http404, если записи нет."""
     return get_object_or_404(Project, pk=pk)
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def get_patch_delete_project(request: Response, pk:int) -> Response:
+    """Получить, частично обновить через PUT или удалить проект по pk.
+
+    GET и успешный PUT возвращают 200, DELETE — 204; отсутствующий проект даёт 404.
+    Несмотря на имя функции, PATCH не входит в разрешённые методы.
+    """
     if request.method == 'GET':
         project = get_project(pk)
         serializer= ProjectDetailSerializer(project)

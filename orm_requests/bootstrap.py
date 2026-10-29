@@ -1,3 +1,5 @@
+"""Подготовка настроек, путей импорта и реестра Django для отдельных ORM-скриптов."""
+
 import os
 import sys
 from pathlib import Path
@@ -7,7 +9,10 @@ from django.apps import apps
 
 
 def setup_django():
-    """Подготовить Django для выполнения отдельных ORM-скриптов."""
+    """Добавить корень проекта в sys.path, сделать его рабочей папкой и инициализировать Django.
+
+    Использует config.settings по умолчанию; при готовом реестре приложений повторно setup не вызывает.
+    """
     project_root = Path(__file__).resolve().parent.parent
 
     # Добавляем корень проекта, только если его ещё нет в путях поиска.

@@ -1,3 +1,5 @@
+"""API просмотра задач и создания, просмотра, изменения и удаления тегов."""
+
 from django.shortcuts import get_object_or_404
 from apps.tasks.serializers import TagsSerializer, AllTasksSerializer, TaskInfoSerializer
 from rest_framework.response import Response
@@ -9,6 +11,10 @@ from apps.tasks.models import Task, Tag
 
 @api_view(['GET'])
 def get_all_tasks(request):
+    """Вернуть задачи по возрастанию ID с необязательным фильтром project по названию проекта.
+
+    Непустой список возвращается с кодом 200, пустая выборка — с кодом 204.
+    """
     project_title = request.query_params.get('project')
     if not project_title:
         all_tasks = Task.objects.all().order_by('id')
@@ -23,6 +29,7 @@ def get_all_tasks(request):
 
 @api_view(['GET'])
 def get_task(request, task_id):
+    """Вернуть подробности задачи по task_id с кодом 200 или вызвать Http404."""
     task = get_object_or_404(Task, id=task_id)
     serializer = TaskInfoSerializer(task)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -30,6 +37,10 @@ def get_task(request, task_id):
 
 @api_view(['POST', 'GET'])
 def post_get_all_tags(request):
+    """Вернуть список тегов через GET либо создать тег через POST.
+
+    GET возвращает 200 или 204 при отсутствии тегов; POST — 201 либо 400 при ошибках данных.
+    """
     if request.method == 'POST':
         new_tag = TagsSerializer(data=request.data)
         if new_tag.is_valid(raise_exception=True):
@@ -47,6 +58,10 @@ def post_get_all_tags(request):
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def  get_put_del_tag(request, tag_id):
+    """Просмотреть, полностью обновить через PUT или удалить тег по tag_id.
+
+    Успешные ответы: GET — 200, PUT — 202, DELETE — 204; отсутствующий тег даёт 404.
+    """
     tag = get_object_or_404(Tag, id=tag_id)
     if request.method == 'GET':
         serializer = TagsSerializer(tag)
