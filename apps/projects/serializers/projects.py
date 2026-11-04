@@ -25,3 +25,11 @@ class  AllProjectFilesSerializer(serializers.ModelSerializer):
         """Поля модели и параметры сериализации AllProjectFilesSerializer."""
         model = ProjectFile
         fields = ['id', 'title', 'projects']
+
+class CreateProjectSerializer(serializers.ModelSerializer):
+    files = AllProjectFilesSerializer(many=True, read_only=True)
+    class Meta:
+        model = Project
+        fields = ['title', 'description', 'created_at', 'files']
+        read_only_fields = ('title', 'created_at',)
+
