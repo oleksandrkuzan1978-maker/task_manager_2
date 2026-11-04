@@ -1,5 +1,9 @@
 """Сериализаторы списка задач с названием проекта и подробностей задачи с вложенными тегами."""
+from typing import Any
 
+from django.utils import timezone
+
+from django.core.checks import Tags
 from rest_framework import serializers
 
 from apps.tasks.models import Task, Priority
@@ -15,24 +19,27 @@ class AllTasksSerializer(serializers.ModelSerializer):
     )
     assignee = serializers.SlugRelatedField(read_only=True
                                             , slug_field='email')
+
     class Meta:
         """Поля модели и параметры сериализации AllTasksSerializer."""
         model = Task
         fields = ['id', 'title', 'status', 'priority', 'project', 'assignee', 'due_date']
 
+
 class CreateTaskSerializer(serializers.ModelSerializer):
     project = serializers.SlugRelatedField(
-        read_only=True,
         slug_field='title',
-        queryset=Project.objects.all(),)
+        queryset=Project.objects.all(), )
+
     class Meta:
         model = Task
         fields = ('title',
- 'description',
- 'priority',
- 'project',
- 'tags',
- 'due_date')
+                  'description',
+                  'priority',
+                  'project',
+                  'tags',
+                  'due_date')
+
         def validate_name(self, value: str) -> str:
             if len(value) < 10:
                 raise serializers.ValidationError("The name of the task couldn't be less than 10 characters")
@@ -43,10 +50,39 @@ class CreateTaskSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("The description of the task couldn't be less than 50 characters")
             return value
 
+        def validate_project(self, value: str) -> str:
+            if not Project.objects.filter(title=value).exists():
+                raise serializers.ValidationError("The project name doesn't exist")
+            return value
+
+        def validate_tags(self, value: list[str, ...]) -> list[str, ...]:
+            if not Tags.objects.filter(name__in=value).exists():
+                raise serializers.ValidationError("The tag name doesn't exist")
+            return value
+
+        def validate_due_date(self, value ):
+            value = timezone.make_aware(value, timezone.get_current_timezone())
+
+            if value < timezone.now():
+                raise serializers.ValidationError("The due date can't be in the future")
+            return value
+
+        def create(self, validated_data: dict[str, Any]) -> Task:
+            tags = validated_data.pop('tags', [])
+
+            task = Task.objects.create(**validated_data)
+
+            for tag in tags:
+                task.tags.add(tag)
+
+            task.save()
+            return task
+
 
 class TaskInfoSerializer(serializers.ModelSerializer):
     """Все поля задачи с вложенным представлением тегов."""
     tags = TagsSerializer(many=True)
+
     class Meta:
         """Поля модели и параметры сериализации TaskInfoSerializer."""
         model = Task
