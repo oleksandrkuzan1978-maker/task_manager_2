@@ -1,11 +1,12 @@
 from django.db.models import QuerySet
+from rest_framework.generics import RetrieveAPIView, get_object_or_404
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 from apps.tasks.models import Task
-from apps.tasks.serializers.tasks import (AllTasksSerializer, CreateTaskSerializer)
+from apps.tasks.serializers.tasks import (AllTasksSerializer, CreateUpdateTaskSerializer, TaskDetailSerializer)
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -25,7 +26,7 @@ class TaskListAPIView(APIView):
         return Task.objects.all()
 
     def post(self, request: Request, *args, **kwargs) -> Response:
-        serializer = CreateTaskSerializer(data=request.data)
+        serializer = CreateUpdateTaskSerializer(data=request.data)
 
         if serializer.is_valid(raise_exception=True):
             serializer.save()
@@ -50,6 +51,35 @@ class TaskListAPIView(APIView):
 
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
+
+class TaskDetailAPIView(RetrieveAPIView):
+    # 1. Объявляем атрибут на уровне класса, чтобы DRF не ругался
+    serializer_class = TaskDetailSerializer
+    def get_object(self):
+        return get_object_or_404(Task, pk=self.kwargs['pk'])
+
+    def get(self, request: Request, *args, **kwargs) -> Response:
+        task = self.get_object()
+        # 2. Переменную экземпляра лучше назвать serializer
+        serializer = self.serializer_class(task)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request: Request, *args, **kwargs) -> Response:
+        task = self.get_object()
+        serializer = CreateUpdateTaskSerializer(instance=task,
+                                                data=request.data,
+                                                partial=True)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request: Request, *args, **kwargs) -> Response:
+        task = self.get_object()
+        task.delete()
+        return Response({"message": "The task has been deleted."},
+                                status=status.HTTP_204_NO_CONTENT)
 
 
 

@@ -1,3 +1,5 @@
 """Публичные импорты сериализаторов задач и тегов."""
 
-from .tasks import TagsSerializer, AllTasksSerializer, TaskInfoSerializer
+from .tasks import (TagsSerializer, AllTasksSerializer
+                    , TaskInfoSerializer, CreateUpdateTaskSerializer
+                    , TaskDetailSerializer)
