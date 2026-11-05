@@ -1,22 +1,13 @@
 """Команда заполнения базы случайными проектами, файлами, задачами и тегами с необязательной очисткой."""
 
 import random
-
 from datetime import timedelta
-
-
-
 from django.core.management.base import BaseCommand
-
 from django.db import transaction
-
 from django.utils import timezone
-
 from faker import Faker
-
-
-
-from apps.tasks.models import (Task, ProjectFile, Project, Tag)
+from apps.projects.models import ProjectFile, Project
+from apps.tasks.models import Task, Tag
 
 
 
