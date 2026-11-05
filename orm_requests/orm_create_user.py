@@ -18,7 +18,7 @@ email = "anna@example.com"
 if User.objects.filter(email=email).exists():
     print("Email already exists")
 else:
-    # get_user_model() возвращает модель, указанную в AUTH_USER_MODEL.
+    # get_user_model() возвращает модель, указанную в AUTH_USER_MODEL;
     # getpass() позволяет ввести пароль в терминале, не сохраняя его в исходном коде.
     user = User.objects.create_user(email=email
                              , password=getpass("Enter your password: ")
