@@ -8,6 +8,7 @@ from rest_framework import serializers
 
 from apps.tasks.models import Task, Priority
 from .tags import TagsSerializer
+from apps.projects.serializers import ProjectShortInfoSerializer
 from ...projects.models import Project
 
 
@@ -26,7 +27,7 @@ class AllTasksSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'status', 'priority', 'project', 'assignee', 'due_date']
 
 
-class CreateTaskSerializer(serializers.ModelSerializer):
+class CreateUpdateTaskSerializer(serializers.ModelSerializer):
     project = serializers.SlugRelatedField(
         slug_field='title',
         queryset=Project.objects.all(), )
@@ -40,43 +41,56 @@ class CreateTaskSerializer(serializers.ModelSerializer):
                   'tags',
                   'due_date')
 
-        def validate_name(self, value: str) -> str:
-            if len(value) < 10:
-                raise serializers.ValidationError("The name of the task couldn't be less than 10 characters")
-            return value
+    def validate_name(self, value: str) -> str:
+        if len(value) < 10:
+            raise serializers.ValidationError("The name of the task couldn't be less than 10 characters")
+        return value
 
-        def validate_description(self, value: str) -> str:
-            if len(value) < 50:
-                raise serializers.ValidationError("The description of the task couldn't be less than 50 characters")
-            return value
+    def validate_description(self, value: str) -> str:
+        if len(value) < 50:
+            raise serializers.ValidationError("The description of the task couldn't be less than 50 characters")
+        return value
 
-        def validate_project(self, value: str) -> str:
-            if not Project.objects.filter(title=value).exists():
-                raise serializers.ValidationError("The project name doesn't exist")
-            return value
+    def validate_project(self, value: str) -> str:
+        if not Project.objects.filter(title=value).exists():
+            raise serializers.ValidationError("The project name doesn't exist")
+        return value
 
-        def validate_tags(self, value: list[str, ...]) -> list[str, ...]:
-            if not Tags.objects.filter(name__in=value).exists():
-                raise serializers.ValidationError("The tag name doesn't exist")
-            return value
+    def validate_tags(self, value: list[str, ...]) -> list[str, ...]:
+        if not Tags.objects.filter(name__in=value).exists():
+            raise serializers.ValidationError("The tag name doesn't exist")
+        return value
 
-        def validate_due_date(self, value ):
+    def validate_due_date(self, value ):
+        # Замените строку 65 на безопасный вариант:
+        if timezone.is_naive(value):
             value = timezone.make_aware(value, timezone.get_current_timezone())
 
-            if value < timezone.now():
-                raise serializers.ValidationError("The due date can't be in the future")
-            return value
+        if value < timezone.now():
+            raise serializers.ValidationError("The due date can't be in the future")
+        return value
 
-        def create(self, validated_data: dict[str, Any]) -> Task:
-            tags = validated_data.pop('tags', [])
+    def create(self, validated_data: dict[str, Any]) -> Task:
+        tags = validated_data.pop('tags', [])
 
-            task = Task.objects.create(**validated_data)
+        task = Task.objects.create(**validated_data)
 
+        for tag in tags:
+            task.tags.add(tag)
+
+        task.save()
+        return task
+
+    def update(self, instance: Task, validated_data: dict[str, Any]) -> Task:
+        tags = validated_data.pop('tags', [])
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if tags:
             for tag in tags:
-                task.tags.add(tag)
-
-            task.save()
-            return task
+                instance.tags.add(tag)
+        instance.save()
+        return instance
 
 
 class TaskInfoSerializer(serializers.ModelSerializer):
@@ -87,3 +101,11 @@ class TaskInfoSerializer(serializers.ModelSerializer):
         """Поля модели и параметры сериализации TaskInfoSerializer."""
         model = Task
         fields = '__all__'
+
+class TaskDetailSerializer(serializers.ModelSerializer):
+    project = ProjectShortInfoSerializer()
+    tags = TagsSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Task
+        exclude =('updated_at', 'deleted_at')
