@@ -1,4 +1,4 @@
-"""Заготовка модуля models приложения users; собственные обработчики пока не определены."""
+"""Модель пользователя с входом по email и дополнительными данными профиля."""
 
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin, UserManager
@@ -14,6 +14,7 @@ from .managers import UserManager
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    """Пользователь с входом по email, контактными данными, должностью и проектом."""
     username = models.CharField(_("username"), max_length=50, unique=True
                                 , error_messages={'unique': _("This username already exists.")})
     first_name = models.CharField(_("first name"), max_length=40, validators=[MinLengthValidator(2)])
@@ -36,4 +37,5 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     def __str__(self):
+        """Вернуть имя и фамилию пользователя."""
         return f"{self.first_name} {self.last_name}"

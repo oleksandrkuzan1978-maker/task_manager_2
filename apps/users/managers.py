@@ -1,8 +1,12 @@
+"""Менеджер создания пользователей и администраторов с входом по email."""
+
 from django.contrib.auth.base_user import BaseUserManager
 
 class UserManager(BaseUserManager):
+    """Создание пользователей с нормализацией email и хешированием пароля."""
     def create_user(self, email, password=None, **extra_fields): # **extra_fields передаёт дополнительные поля:
                                                                  # имя, фамилию, username и другие.
+        """Проверить обязательные поля, хешировать пароль и сохранить пользователя."""
         if not email:
             raise ValueError('Users must have an email address')
 

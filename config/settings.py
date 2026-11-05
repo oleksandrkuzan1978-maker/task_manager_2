@@ -37,6 +37,11 @@ INSTALLED_APPS = [
     'apps.users.apps.UsersConfig',
     'apps.projects.apps.ProjectsConfig'
 ]
+# Эта настройка говорит Django:
+# «Основная модель пользователя в этом проекте — класс User из приложения users».
+# Без настройки Django использует встроенную модель auth.User.
+# Простого добавления приложения в INSTALLED_APPS недостаточно для её замены.
+AUTH_USER_MODEL = "users.User"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

@@ -7,7 +7,7 @@ from django.db import transaction
 from django.utils import timezone
 from faker import Faker
 from apps.projects.models import ProjectFile, Project
-from apps.tasks.models import Task, Tag
+from apps.tasks.models import Task, Tag, Status, Priority
 
 
 
@@ -33,15 +33,12 @@ class Command(BaseCommand):
 
 
 
-    @transaction.atomic # если что-то упадёт, в базу не запишется ничего
-
     def handle(self, *args, **options):
         """Создать пять проектов со случайными файлами и задачами и использовать заданный набор тегов.
 
         При --clear сначала удаляет прежние данные. Пользователей не создаёт.
         Изменения БД выполняются в транзакции; при ошибке пытается удалить новые файлы.
-        Код ожидает Task.STATUS_CHOICES, Task.PRIORITY_CHOICES и импорт ProjectFile из apps.tasks.models;
-        текущие модели не предоставляют эти имена, поэтому команда требует исправления перед запуском.
+        Статусы и приоритеты выбираются из актуальных перечислений моделей.
         """
         from uuid import uuid4
 
@@ -52,81 +49,82 @@ class Command(BaseCommand):
         # Запоминаем новые файлы, чтобы убрать их при ошибке заполнения.
         saved_files = []
         try:
-            if options.get('clear', False):
-                self.clear()
+            with transaction.atomic():
+                if options.get('clear', False):
+                    self.clear()
 
-            tags = [
-                Tag.objects.get_or_create(name=name)[0]
-                for name in ('Backend', 'Frontend', 'Тестирование', 'Документация',
-                             'Ошибка', 'Улучшение', 'Срочно', 'Исследование')
-            ]
-            # Пользователей не создаём и не меняем; исполнитель необязателен.
-            assignee_ids = list(
-                get_user_model().objects.filter(is_active=True)
-                .values_list('pk', flat=True)
-            )
-            statuses = [value for value, _ in Task.STATUS_CHOICES]
-            priorities = [value for value, _ in Task.PRIORITY_CHOICES]
-            now = timezone.now()
-            project_count = 5
-            task_count = 0
-            file_count = 0
-
-            for number in range(1, project_count + 1):
-                # UUID сохраняет уникальность названий при повторных запусках.
-                project = Project(
-                    title=f'Тестовый проект {number}: {uuid4().hex}',
-                    description=faker.paragraph(nb_sentences=5),
+                tags = [
+                    Tag.objects.get_or_create(name=name)[0]
+                    for name in ('Backend', 'Frontend', 'Тестирование', 'Документация',
+                                 'Ошибка', 'Улучшение', 'Срочно', 'Исследование')
+                ]
+                # Пользователей не создаём и не меняем; исполнитель необязателен.
+                assignee_ids = list(
+                    get_user_model().objects.filter(is_active=True)
+                    .values_list('pk', flat=True)
                 )
-                # save() не запускает валидацию модели автоматически.
-                project.full_clean()
-                project.save()
+                statuses = Status.values
+                priorities = Priority.values
+                now = timezone.now()
+                project_count = 5
+                task_count = 0
+                file_count = 0
 
-                for file_number in range(1, random.randint(1, 3) + 1):
-                    attachment = ProjectFile(
-                        title=f'Документ {file_number} проекта {number}',
+                for number in range(1, project_count + 1):
+                    # UUID сохраняет уникальность названий при повторных запусках.
+                    project = Project(
+                        title=f'Тестовый проект {number}: {uuid4().hex}',
+                        description=faker.paragraph(nb_sentences=5),
                     )
-                    content = f'{project.title}\n\n{faker.text(max_nb_chars=1000)}\n'
-                    attachment.file.save(
-                        f'seed_task_{uuid4().hex}.txt',
-                        ContentFile(content.encode('utf-8')),
-                        save=False,
-                    )
-                    saved_files.append((attachment.file.storage, attachment.file.name))
-                    attachment.full_clean()
-                    attachment.save()
-                    # ManyToMany заполняется после сохранения обеих записей.
-                    project.files.add(attachment)
-                    file_count += 1
+                    # save() не запускает валидацию модели автоматически.
+                    project.full_clean()
+                    project.save()
 
-                for task_number in range(1, random.randint(5, 10) + 1):
-                    task = Task(
-                        title=f'Задача {number}.{task_number}: {uuid4().hex}',
-                        description=faker.paragraph(nb_sentences=3),
-                        project=project,
-                        status=random.choice(statuses),
-                        priority=random.choice(priorities),
-                        assignee_id=random.choice([None, *assignee_ids]),
-                        # Добавляем и просроченные задачи для проверки фильтров.
-                        due_date=now + timedelta(
-                            days=random.randint(-14, 45),
-                            hours=random.randint(0, 23),
-                        ),
-                    )
-                    task.full_clean()
-                    task.save()
-                    task.tags.set(random.sample(tags, k=random.randint(0, 4)))
-                    task_count += 1
+                    for file_number in range(1, random.randint(1, 3) + 1):
+                        attachment = ProjectFile(
+                            title=f'Документ {file_number} проекта {number}',
+                        )
+                        content = f'{project.title}\n\n{faker.text(max_nb_chars=1000)}\n'
+                        attachment.file.save(
+                            f'seed_task_{uuid4().hex}.txt',
+                            ContentFile(content.encode('utf-8')),
+                            save=False,
+                        )
+                        saved_files.append((attachment.file.storage, attachment.file.name))
+                        attachment.full_clean()
+                        attachment.save()
+                        # ManyToMany заполняется после сохранения обеих записей.
+                        project.files.add(attachment)
+                        file_count += 1
 
-            message = (
-                f'Создано проектов: {project_count}, файлов: {file_count}, '
-                f'задач: {task_count}. Использовано тегов: {len(tags)}.'
-            )
-            transaction.on_commit(
-                lambda: self.stdout.write(self.style.SUCCESS(message))
-            )
+                    for task_number in range(1, random.randint(5, 10) + 1):
+                        task = Task(
+                            title=f'Задача {number}.{task_number}: {uuid4().hex}',
+                            description=faker.paragraph(nb_sentences=3),
+                            project=project,
+                            status=random.choice(statuses),
+                            priority=random.choice(priorities),
+                            assignee_id=random.choice([None, *assignee_ids]),
+                            # Добавляем и просроченные задачи для проверки фильтров.
+                            due_date=now + timedelta(
+                                days=random.randint(-14, 45),
+                                hours=random.randint(0, 23),
+                            ),
+                        )
+                        task.full_clean()
+                        task.save()
+                        task.tags.set(random.sample(tags, k=random.randint(0, 4)))
+                        task_count += 1
+
+                message = (
+                    f'Создано проектов: {project_count}, файлов: {file_count}, '
+                    f'задач: {task_count}. Использовано тегов: {len(tags)}.'
+                )
+                transaction.on_commit(
+                    lambda: self.stdout.write(self.style.SUCCESS(message))
+                )
         except Exception:
-            # База откатится декоратором atomic; файлы удаляем отдельно.
+            # Транзакция откатилась; новые физические файлы удаляем отдельно.
             for storage, name in saved_files:
                 try:
                     storage.delete(name)
@@ -138,20 +136,23 @@ class Command(BaseCommand):
     def clear(self):
         """Удалить все проекты, записи файлов и теги, каскадно удаляя задачи и связи.
 
-        Пользователей сохраняет. Физические файлы удаляет после успешной фиксации транзакции,
+        Пользователей сохраняет, сбрасывая их связь с удаляемыми проектами. Физические файлы удаляет после успешной фиксации транзакции,
         если соответствующие пути больше не используются записями ProjectFile.
         """
         storage = ProjectFile._meta.get_field('file').storage
         file_names = set(
             ProjectFile.objects.exclude(file='').values_list('file', flat=True)
         )
+        from django.contrib.auth import get_user_model
+
+        # Сохраняем пользователей: их связь с проектом использует CASCADE.
+        get_user_model().objects.filter(project__isnull=False).update(project=None)
         # Задачи и промежуточные ManyToMany-связи удалятся каскадно.
         Project.objects.all().delete()
         ProjectFile.objects.all().delete()
         Tag.objects.all().delete()
 
         def delete_files():
-            # При откате БД старые вложения должны оставаться доступными.
             """После фиксации транзакции удалить неиспользуемые файлы и вывести ошибки удаления в stderr."""
             for name in file_names:
                 try:

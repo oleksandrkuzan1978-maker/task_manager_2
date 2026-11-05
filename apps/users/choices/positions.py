@@ -1,7 +1,10 @@
+"""Допустимые должности пользователей и их отображаемые названия."""
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 class UserPositions(models.TextChoices):
+    """Должности участников проекта."""
     CEO = "ceo", _("CEO")
     CTO = "cto", _("CTO")
     DESIGNER = "designer", _("Designer")
