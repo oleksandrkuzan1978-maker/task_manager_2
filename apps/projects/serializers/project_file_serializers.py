@@ -63,3 +63,15 @@ class CreateProjectFileSerializer(serializers.ModelSerializer):
         else:
             raise serializers.ValidationError("File size is too large (2 MB as maximum)."
 )
+
+
+class ProjectFileDetailSerializer(serializers.ModelSerializer):
+    """Сериализатор для получения детальной информации о файле и его удаления."""
+    # Выводим связанные проекты через их строковое представление или вложенный сериализатор
+    projects = serializers.SlugRelatedField(many=True, read_only=True, slug_field='title')
+
+    class Meta:
+        """Поля модели ProjectFile для детального отображения."""
+        model = ProjectFile
+        # Укажите поля вашей модели. Например: id, title, file, projects и поля дат (если есть, например, created_at)
+        fields = ('id', 'title', 'file', 'projects')

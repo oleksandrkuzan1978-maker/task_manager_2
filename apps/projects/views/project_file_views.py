@@ -1,13 +1,15 @@
 """API списка файлов с фильтром по названию проекта и загрузки файла в указанный проект."""
+import os
 
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
 from rest_framework import status, serializers
 from rest_framework.views import APIView
 from rest_framework.generics import get_object_or_404, ListAPIView
 
 from apps.projects.models import ProjectFile, Project
-from apps.projects.serializers.project_file_serializers import (AllProjectFilesSerializer, CreateProjectFileSerializer,)
+from apps.projects.serializers.project_file_serializers import (AllProjectFilesSerializer, CreateProjectFileSerializer, ProjectFileDetailSerializer,)
 
 class ProjectFileListAPIView(APIView):
     """Просмотр файлов по названию проекта и загрузка файла с привязкой к проекту по ID."""
@@ -62,6 +64,88 @@ class ProjectFileListAPIView(APIView):
             return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ProjectFileListGenericView(ListCreateAPIView):
+    """Класс-отображение для получения списка всех файлов и создания нового файла (через Generic)."""
+
+    def get_serializer_class(self):
+        # Автоматический выбор сериализатора в зависимости от HTTP-метода
+        if self.request.method == 'GET':
+            return AllProjectFilesSerializer
+        elif self.request.method == 'POST':
+            return CreateProjectFileSerializer
+
+    def get_queryset(self):
+        # Получение файлов по имени проекта. Если имя не передано — отдаем все файлы
+        project_name = self.request.query_params.get('project')
+        if project_name:
+            return ProjectFile.objects.filter(projects__title=project_name)
+        return ProjectFile.objects.all()
+
+    def list(self, request: Request, *args, **kwargs) -> Response:
+        project_files = self.get_queryset()
+        if not project_files.exists():
+            return Response(data=[], status=status.HTTP_204_NO_CONTENT)
+
+        serializer = self.get_serializer(project_files, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def create(self, request: Request, *args, **kwargs) -> Response:
+        file_content = request.FILES.get("file")
+
+        # Строгая валидация project_id из request.data с помощью встроенного поля DRF
+        try:
+            project_id = serializers.IntegerField(
+                min_value=1
+            ).run_validation(request.data.get('project_id'))
+        except serializers.ValidationError as exc:
+            raise serializers.ValidationError({'project_id': exc.detail})
+
+        # Проверяем существование проекта
+        project = get_object_or_404(Project, pk=project_id)
+
+        # Контекст raw_file нужен вашему сериализатору для сохранения на диск порциями
+        serializer = self.get_serializer(
+            data=request.data,
+            context={"raw_file": file_content}
+        )
+
+        if serializer.is_valid(raise_exception=True):
+            # Переименованный метод validate_file вызовется автоматически внутри is_valid
+            project_file = serializer.save()
+
+            # Привязываем файл к проекту через Many-to-Many связь
+            project_file.projects.set([project])
+
+            return Response(
+                data={"message": "File upload successfully"},
+                status=status.HTTP_201_CREATED
+            )
+
+        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ProjectFileDetailGenericView(RetrieveDestroyAPIView):
+    """Класс-отображение для детального просмотра файла и его удаления из БД и файловой системы."""
+    queryset = ProjectFile.objects.all()
+    serializer_class = ProjectFileDetailSerializer
 
+    def destroy(self, request, *args, **kwargs):
+        # Получаем объект файла перед удалением из базы данных
+        instance = self.get_object()
+
+        # Получаем относительный путь к файлу из поля file
+        file_path = instance.file.name if hasattr(instance.file, 'name') else str(instance.file)
+
+        # Полный путь на сервере
+        from django.conf import settings
+        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+
+        # Удаляем запись из базы данных
+        response = super().destroy(request, *args, **kwargs)
+
+        # Если запись удалена успешно и файл физически существует на диске — удаляем его
+        if response.status_code == status.HTTP_204_NO_CONTENT:
+            if os.path.exists(full_path) and os.path.isfile(full_path):
+                os.remove(full_path)
+
+        return response
