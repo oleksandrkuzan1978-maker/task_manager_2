@@ -1,6 +1,7 @@
 """API списка файлов с фильтром по названию проекта и загрузки файла в указанный проект."""
 import os
 
+from django.http import FileResponse, Http404
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
@@ -154,3 +155,33 @@ class ProjectFileDetailGenericView(RetrieveDestroyAPIView):
                 os.remove(full_path)
 
         return response
+
+
+class DownloadProjectFileView(APIView):
+    """Скачивание содержимого сохранённого файла проекта по идентификатору файла."""
+    def get_object(self):
+        """Найти запись файла по pk из URL или вернуть ошибку 404."""
+        return get_object_or_404(ProjectFile, pk=self.kwargs['pk'])
+
+    def get(self, request, *args, **kwargs):
+        """Открыть файл в бинарном режиме и вернуть вложение либо ошибку 404 при его отсутствии."""
+        project_file = self.get_object()
+
+        if not project_file.file:
+            raise Http404("The record has no file")
+        try:
+            file_handle = project_file.file.open('rb')
+        except FileNotFoundError:
+            raise Http404("Файл отсутствует в хранилище")
+
+        response = FileResponse(file_handle, content_type='application/octet-stream')
+        response['Content-Disposition'] = f'attachment; filename="{project_file.file}"'
+
+        return response
+
+        # return FileResponse(
+        #     file_handle,
+        #     as_attachment=True,
+        #     filename=Path(project_file.file.name).name,
+
+

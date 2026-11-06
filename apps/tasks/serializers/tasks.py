@@ -10,6 +10,7 @@ from apps.tasks.models import Task, Priority
 from .tags import TagsSerializer
 from apps.projects.serializers import ProjectShortInfoSerializer
 from ...projects.models import Project
+from apps.users.models import User
 
 
 class AllTasksSerializer(serializers.ModelSerializer):
@@ -33,6 +34,11 @@ class CreateUpdateTaskSerializer(serializers.ModelSerializer):
         slug_field='title',
         queryset=Project.objects.all(), )
 
+    assignee = serializers.SlugRelatedField(slug_field='email'
+                                            , queryset=User.objects.all()
+                                            , required=False)
+
+
     class Meta:
         """Модель задачи и поля, доступные для записи."""
         model = Task
@@ -41,7 +47,8 @@ class CreateUpdateTaskSerializer(serializers.ModelSerializer):
                   'priority',
                   'project',
                   'tags',
-                  'due_date')
+                  'due_date',
+                  'assignee')
 
     def validate_name(self, value: str) -> str:
         """Проверить длину названия; DRF не вызывает метод без поля name."""
