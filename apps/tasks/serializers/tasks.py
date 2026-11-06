@@ -28,11 +28,13 @@ class AllTasksSerializer(serializers.ModelSerializer):
 
 
 class CreateUpdateTaskSerializer(serializers.ModelSerializer):
+    """Валидация, создание и обновление задачи с проектом и тегами."""
     project = serializers.SlugRelatedField(
         slug_field='title',
         queryset=Project.objects.all(), )
 
     class Meta:
+        """Модель задачи и поля, доступные для записи."""
         model = Task
         fields = ('title',
                   'description',
@@ -42,27 +44,32 @@ class CreateUpdateTaskSerializer(serializers.ModelSerializer):
                   'due_date')
 
     def validate_name(self, value: str) -> str:
+        """Проверить длину названия; DRF не вызывает метод без поля name."""
         if len(value) < 10:
             raise serializers.ValidationError("The name of the task couldn't be less than 10 characters")
         return value
 
     def validate_description(self, value: str) -> str:
+        """Отклонить описание короче 50 символов."""
         if len(value) < 50:
             raise serializers.ValidationError("The description of the task couldn't be less than 50 characters")
         return value
 
     def validate_project(self, value: str) -> str:
+        """Проверить существование выбранного проекта."""
         if not Project.objects.filter(title=value).exists():
             raise serializers.ValidationError("The project name doesn't exist")
         return value
 
     def validate_tags(self, value: list[str, ...]) -> list[str, ...]:
+        """Проверить существование переданных тегов."""
         if not Tags.objects.filter(name__in=value).exists():
             raise serializers.ValidationError("The tag name doesn't exist")
         return value
 
     def validate_due_date(self, value ):
         # Замените строку 65 на безопасный вариант:
+        """Добавить часовой пояс при необходимости и отклонить прошедший срок."""
         if timezone.is_naive(value):
             value = timezone.make_aware(value, timezone.get_current_timezone())
 
@@ -71,6 +78,7 @@ class CreateUpdateTaskSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data: dict[str, Any]) -> Task:
+        """Сохранить новую задачу и добавить переданные теги."""
         tags = validated_data.pop('tags', [])
 
         task = Task.objects.create(**validated_data)
@@ -82,6 +90,7 @@ class CreateUpdateTaskSerializer(serializers.ModelSerializer):
         return task
 
     def update(self, instance: Task, validated_data: dict[str, Any]) -> Task:
+        """Обновить переданные поля задачи и добавить указанные теги."""
         tags = validated_data.pop('tags', [])
 
         for attr, value in validated_data.items():
@@ -103,9 +112,11 @@ class TaskInfoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class TaskDetailSerializer(serializers.ModelSerializer):
+    """Подробности задачи с вложенными данными проекта и тегов."""
     project = ProjectShortInfoSerializer()
     tags = TagsSerializer(many=True, read_only=True)
 
     class Meta:
+        """Поля задачи без времени обновления и удаления."""
         model = Task
         exclude =('updated_at', 'deleted_at')

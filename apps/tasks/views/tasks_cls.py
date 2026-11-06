@@ -1,3 +1,5 @@
+"""API списка, создания, просмотра, изменения и удаления задач."""
+
 from django.db.models import QuerySet
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
 from rest_framework.response import Response
@@ -10,15 +12,18 @@ from apps.tasks.serializers.tasks import (AllTasksSerializer, CreateUpdateTaskSe
 
 
 class StandardResultsSetPagination(PageNumberPagination):
+    """Пагинация задач: пять записей по умолчанию и максимум пятнадцать."""
     page_size = 5
     page_size_query_param = 'page_size'
     max_page_size = 15
 
 
 class TaskListAPIView(APIView):
+    """Получение списка задач и создание новой задачи."""
     paginator = StandardResultsSetPagination
 
     def get_objects(self) -> QuerySet:
+        """Вернуть задачи с необязательным фильтром по названию проекта."""
         project_name = self.request.query_params.get('project_name')
 
         if project_name:
@@ -26,6 +31,7 @@ class TaskListAPIView(APIView):
         return Task.objects.all()
 
     def post(self, request: Request, *args, **kwargs) -> Response:
+        """Проверить входные данные и создать задачу с ответом 201."""
         serializer = CreateUpdateTaskSerializer(data=request.data)
 
         if serializer.is_valid(raise_exception=True):
@@ -35,6 +41,7 @@ class TaskListAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request: Request, *args, **kwargs) -> Response:
+        """Вернуть страницу задач либо ответ 204 при пустой выборке."""
         tasks = self.get_objects()
 
         if not tasks.exists():
@@ -54,11 +61,14 @@ class TaskListAPIView(APIView):
 
 class TaskDetailAPIView(RetrieveAPIView):
     # 1. Объявляем атрибут на уровне класса, чтобы DRF не ругался
+    """Просмотр, частичное обновление через PUT и удаление задачи."""
     serializer_class = TaskDetailSerializer
     def get_object(self):
+        """Найти задачу по ID из URL или вернуть ошибку 404."""
         return get_object_or_404(Task, pk=self.kwargs['pk'])
 
     def get(self, request: Request, *args, **kwargs) -> Response:
+        """Вернуть подробные данные задачи."""
         task = self.get_object()
         # 2. Переменную экземпляра лучше назвать serializer
         serializer = self.serializer_class(task)
@@ -66,6 +76,7 @@ class TaskDetailAPIView(RetrieveAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request: Request, *args, **kwargs) -> Response:
+        """Проверить и сохранить переданные поля существующей задачи."""
         task = self.get_object()
         serializer = CreateUpdateTaskSerializer(instance=task,
                                                 data=request.data,
@@ -76,6 +87,7 @@ class TaskDetailAPIView(RetrieveAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request: Request, *args, **kwargs) -> Response:
+        """Удалить задачу и вернуть статус 204."""
         task = self.get_object()
         task.delete()
         return Response({"message": "The task has been deleted."},

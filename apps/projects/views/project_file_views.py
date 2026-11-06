@@ -69,6 +69,7 @@ class ProjectFileListGenericView(ListCreateAPIView):
 
     def get_serializer_class(self):
         # Автоматический выбор сериализатора в зависимости от HTTP-метода
+        """Выбрать сериализатор списка для GET или загрузки для POST."""
         if self.request.method == 'GET':
             return AllProjectFilesSerializer
         elif self.request.method == 'POST':
@@ -76,12 +77,14 @@ class ProjectFileListGenericView(ListCreateAPIView):
 
     def get_queryset(self):
         # Получение файлов по имени проекта. Если имя не передано — отдаем все файлы
+        """Вернуть файлы с необязательным фильтром по названию проекта."""
         project_name = self.request.query_params.get('project')
         if project_name:
             return ProjectFile.objects.filter(projects__title=project_name)
         return ProjectFile.objects.all()
 
     def list(self, request: Request, *args, **kwargs) -> Response:
+        """Вернуть список файлов либо статус 204 при пустой выборке."""
         project_files = self.get_queryset()
         if not project_files.exists():
             return Response(data=[], status=status.HTTP_204_NO_CONTENT)
@@ -90,6 +93,7 @@ class ProjectFileListGenericView(ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request: Request, *args, **kwargs) -> Response:
+        """Проверить multipart-данные, сохранить файл и связать его с проектом."""
         file_content = request.FILES.get("file")
 
         # Строгая валидация project_id из request.data с помощью встроенного поля DRF
@@ -131,6 +135,7 @@ class ProjectFileDetailGenericView(RetrieveDestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         # Получаем объект файла перед удалением из базы данных
+        """Удалить запись файла, затем существующий физический файл."""
         instance = self.get_object()
 
         # Получаем относительный путь к файлу из поля file

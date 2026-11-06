@@ -1,3 +1,5 @@
+"""ORM-пример выборки проектов, созданных за последний месяц."""
+
 from django.utils import timezone
 import calendar
 from datetime import datetime, timedelta

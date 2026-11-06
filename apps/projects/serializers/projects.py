@@ -31,14 +31,18 @@ class  AllProjectFilesSerializer(serializers.ModelSerializer):
 
 
 class CreateProjectSerializer(serializers.ModelSerializer):
+    """Обновление описания проекта с представлением файлов только для чтения."""
     files = AllProjectFilesSerializer(many=True, read_only=True)
     class Meta:
+        """Поля проекта; название и дата создания доступны только для чтения."""
         model = Project
         fields = ['title', 'description', 'created_at', 'files']
         read_only_fields = ('title', 'created_at',)
 
 
 class ProjectShortInfoSerializer(serializers.ModelSerializer):
+    """Краткое представление проекта: ID и название."""
     class Meta:
+        """Модель проекта и поля краткого представления."""
         model = Project
         fields = ('id', 'title')
