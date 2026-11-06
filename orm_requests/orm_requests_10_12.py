@@ -16,7 +16,7 @@ setup_django()
 print('\nЗАДАНИЕ 10\n')
 
 # 1. Импортируйте модуль datetime и модель Project.
-from apps.tasks.models import  Project, ProjectFile
+from apps.projects.models import  Project, ProjectFile
 
 # 2. Создайте объект даты, по которой нужно сделать поиск.
 created_at = date(2026, 10, 8)

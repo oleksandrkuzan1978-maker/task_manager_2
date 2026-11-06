@@ -13,7 +13,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-email = "anna@example.com"
+email = "ivan@example.com"
 
 if User.objects.filter(email=email).exists():
     print("Email already exists")
@@ -22,8 +22,8 @@ else:
     # getpass() позволяет ввести пароль в терминале, не сохраняя его в исходном коде.
     user = User.objects.create_user(email=email
                              , password=getpass("Enter your password: ")
-                             , username="anna"
-                             , first_name="Anna"
-                             , last_name="Ivanova")
+                             , username="Ivan"
+                             , first_name="Ivan"
+                             , last_name="Ivanov")
 
     print(f"User created successfully: id={user.pk}, email={user.email}")
