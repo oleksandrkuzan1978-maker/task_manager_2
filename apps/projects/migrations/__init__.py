@@ -1,0 +1,1 @@
+"""Пакет apps.projects.migrations."""
